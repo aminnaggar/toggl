@@ -21,19 +21,21 @@ class TogglAPIService
     get_latest_toggl_entries_api_response('time_entries').map { |entry|
       if entry["description"] =~ /\s*#(\d+)\s*/ && !entry["stop"].nil? && !entry["stop"].empty? &&
       (@toggl_workspace.blank? || workspace_ids.include?(entry['wid']))
-        
+
         activity_name = nil
         if entry.has_key?("tags") and not entry["tags"].empty?
-          activity_name = entry["tags"].first
-        end         
+          activity_name = entry["tags"].last              # @amin: Rather get the last than the first
+                                                          #        sometimes, mobile adds it's own tags
+        end
 
-        TogglAPIEntry.new(entry["id"],
-                          $1.to_i,
-                          Time.parse(entry["start"]),
-                          entry["duration"].to_f / 3600,
-                          entry["description"].gsub(/\s*#\d+\s*/, ''),
-                          activity_name
-                          )
+        TogglAPIEntry.new(
+          entry["id"],                                    #id
+          $1.to_i,                                        #issue_id
+          Time.parse(entry["start"]),                     #started_at
+          entry["duration"].to_f / 3600,                  #duration
+          entry["description"].gsub(/\s*#\d+\s*/, ''),    #description
+          activity_name                                   #activity_name
+        )
       else
         nil
       end
